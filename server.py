@@ -9,25 +9,41 @@ app = FastAPI()
 
 @app.get("/create_url")
 def create_url(url: str, alias: str):
-    if insert(DATABASE, url, alias):
+    try: 
+        insert(DATABASE, url, alias)
+        print("inserted successfully")
         return {"url":url, "alias":alias}
-    return {"message": "Failed to create URL"}
+    except Exception as e:
+        print("could not insert")
+        return {"message": "Failed to create URL"}
 
 @app.get("/list_all")
 def list_all():
-    urls = list_(DATABASE)
-    return [{"url": url} for url in urls]
+    try:
+        urls = list_(DATABASE)
+        return [{"url": url} for url in urls]
+    except Exception as e:
+        return {"message": "Failed to list urls"}
 
 @app.get("/find/{alias}")
 def find(alias):
-    result = retrieve(DATABASE, alias)
-    return {"url": result} if result else {"message": "Alias not found"}
+    try: 
+        result = retrieve(DATABASE, alias)
+        print("url found successfully")
+        return {"url": result}
+    except Exception as e:
+        print("url not found")
+        return {"message": "url not found"}
 
 @app.get("/delete/{alias}")
 def delete(alias):
-    if delete_url(DATABASE, alias):
-        return "alias deleted successfully"
-    return "alias not found"
+    try: 
+        delete_url(DATABASE, alias)
+        print("alias deleted successfully")
+        return {"message": "alias deleted successfully"}
+    except Exception as e:
+        print("alias not deleted")
+        return {"message": "alias not found"}
 
 
 if __name__ == "__main__":
