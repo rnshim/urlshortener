@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 import uvicorn
 from fastapi.responses import RedirectResponse
 from fastapi import HTTPException
@@ -8,12 +8,13 @@ DATABASE = "url_shortener.db"
 create(DATABASE)
 app = FastAPI()
 
-@app.get("/create_url")
-def create_url(url: str, alias: str):
+@app.post("/create_url")
+async def create_url(request: Request):
     try: 
-        insert(DATABASE, url, alias)
+        urljson = await request.json()
+        insert(DATABASE, urljson['url'], urljson['alias'])
         print("inserted successfully")
-        return {"url":url, "alias":alias}
+        return {"url":urljson['url'], "alias":urljson['alias']}
     except Exception as e:
         print("could not insert")
         return {"message": "Failed to create URL"}
@@ -30,13 +31,15 @@ def find(alias):
     try: 
         result = retrieve(DATABASE, alias)
         print("url found successfully")
-        return RedirectResponse(result)
+        print(result)
+        return RedirectResponse(url=result, status_code=308)
+
     except Exception as e:
         print("url not found")
         raise HTTPException(status_code=404, detail="Item not found")
 
-@app.get("/delete/{alias}")
-def delete(alias):
+@app.delete("/delete/{alias}")
+def delete(alias: str):
     try: 
         delete_url(DATABASE, alias)
         print("alias deleted successfully")

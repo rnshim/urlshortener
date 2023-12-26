@@ -44,4 +44,6 @@ def retrieve(sqlite_file, alias):
     cursor.execute("SELECT url FROM urls WHERE alias=?", (alias,))
     row = cursor.fetchone()
     conn.close()
-    return row[0] if row else None
+    print("alias " + alias)
+    print(row[0])
+    return row[0] if row is not None else None
