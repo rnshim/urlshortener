@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 import uvicorn
-import random
+from fastapi.responses import RedirectResponse
+from fastapi import HTTPException
 from db import *
 
 DATABASE = "url_shortener.db"
@@ -20,8 +21,7 @@ def create_url(url: str, alias: str):
 @app.get("/list_all")
 def list_all():
     try:
-        urls = list_(DATABASE)
-        return [{"url": url} for url in urls]
+        return list_urls(DATABASE)
     except Exception as e:
         return {"message": "Failed to list urls"}
 
@@ -30,10 +30,10 @@ def find(alias):
     try: 
         result = retrieve(DATABASE, alias)
         print("url found successfully")
-        return {"url": result}
+        return RedirectResponse(result)
     except Exception as e:
         print("url not found")
-        return {"message": "url not found"}
+        raise HTTPException(status_code=404, detail="Item not found")
 
 @app.get("/delete/{alias}")
 def delete(alias):

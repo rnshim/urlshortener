@@ -28,13 +28,15 @@ def delete_url(sqlite_file, alias):
     conn.commit()
     conn.close()
 
-def list_(sqlite_file):
+def list_urls(sqlite_file):
     conn = sqlite3.connect(sqlite_file)
     cursor = conn.cursor()
-    cursor.execute("SELECT url FROM urls")
+    cursor.execute("SELECT * FROM urls")
     rows = cursor.fetchall()
     conn.close()
-    return rows
+    column_names = [description[0] for description in cursor.description]
+    result = [dict(zip(column_names, row)) for row in rows]
+    return result
 
 def retrieve(sqlite_file, alias):
     conn = sqlite3.connect(sqlite_file)
@@ -43,3 +45,4 @@ def retrieve(sqlite_file, alias):
     row = cursor.fetchone()
     conn.close()
     return row[0] if row else None
+
