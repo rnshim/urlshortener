@@ -5,8 +5,11 @@ from fastapi import HTTPException
 from db import *
 from datetime import datetime
 from hash import *
+from args import *
 
-DATABASE = "url_shortener.db"
+args = get_args()
+
+DATABASE = args.db_name
 create(DATABASE)
 app = FastAPI()
 
@@ -57,6 +60,6 @@ def delete(alias: str):
 
 
 if __name__ == "__main__":
-    uvicorn.run("server:app", port=8000, reload=True)
+    uvicorn.run("server:app", host=args.host, port=args.port, reload=True)
 
 #python -m uvicorn server:app --reload
