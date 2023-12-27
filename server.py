@@ -3,6 +3,8 @@ import uvicorn
 from fastapi.responses import RedirectResponse
 from fastapi import HTTPException
 from db import *
+from datetime import datetime
+from hash import *
 
 DATABASE = "url_shortener.db"
 create(DATABASE)
@@ -12,9 +14,14 @@ app = FastAPI()
 async def create_url(request: Request):
     try: 
         urljson = await request.json()
-        insert(DATABASE, urljson['url'], urljson['alias'])
+        if 'alias' in urljson:
+            insert(DATABASE, urljson['url'], urljson['alias'])
+            print("inserted successfully")
+            return {"url":urljson['url'], "alias":urljson['alias']}
+        alias = generate_hash(urljson['url'], str(datetime.now()))
+        insert(DATABASE, urljson['url'], alias)
         print("inserted successfully")
-        return {"url":urljson['url'], "alias":urljson['alias']}
+        return {"url":urljson['url'], "alias":alias}
     except Exception as e:
         print("could not insert")
         return {"message": "Failed to create URL"}
@@ -52,3 +59,4 @@ def delete(alias: str):
 if __name__ == "__main__":
     uvicorn.run("server:app", port=8000, reload=True)
 
+#python -m uvicorn server:app --reload
