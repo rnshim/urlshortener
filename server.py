@@ -18,15 +18,22 @@ async def create_url(request: Request):
     try: 
         urljson = await request.json()
         if 'alias' in urljson:
-            insert(DATABASE, urljson['url'], urljson['alias'])
-            print("inserted successfully")
-            return {"url":urljson['url'], "alias":urljson['alias']}
+            if urljson['alias'].isalnum():
+                insert(DATABASE, urljson['url'], urljson['alias'])
+                print("inserted successfully")
+                return {"url":urljson['url'], "alias":urljson['alias']}
+            else:
+                raise ValueError("Alias must be alphanumeric")
         if args.disable_random_alias:
-            raise HTTPException(status_code=400, detail="Random alias generation is disabled")
+            raise KeyError("Alias must be provided")
         alias = generate_hash(urljson['url'], str(datetime.now()))
         insert(DATABASE, urljson['url'], alias)
         print("inserted successfully")
         return {"url":urljson['url'], "alias":alias}
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except KeyError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except HTTPException as e:
         print("could not insert")
         return {"message": e.detail}
