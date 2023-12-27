@@ -29,6 +29,7 @@ def get_args():
 
   parser.add_argument(
   "--disable-random-alias",
+  action="store_true",
   help="disable random alias",
   )
 

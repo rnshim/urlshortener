@@ -21,13 +21,18 @@ async def create_url(request: Request):
             insert(DATABASE, urljson['url'], urljson['alias'])
             print("inserted successfully")
             return {"url":urljson['url'], "alias":urljson['alias']}
+        if args.disable_random_alias:
+            raise HTTPException(status_code=400, detail="Random alias generation is disabled")
         alias = generate_hash(urljson['url'], str(datetime.now()))
         insert(DATABASE, urljson['url'], alias)
         print("inserted successfully")
         return {"url":urljson['url'], "alias":alias}
+    except HTTPException as e:
+        print("could not insert")
+        return {"message": e.detail}
     except Exception as e:
         print("could not insert")
-        return {"message": "Failed to create URL"}
+        return {"message": str(e)}
 
 @app.get("/list_all")
 def list_all():
