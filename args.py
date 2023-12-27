@@ -26,5 +26,10 @@ def get_args():
   required=False,
   help="enter port number",
   )
-  
+
+  parser.add_argument(
+  "--disable-random-alias",
+  help="disable random alias",
+  )
+
   return parser.parse_args()
