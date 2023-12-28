@@ -1,12 +1,11 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException, HTMLResponse
 import uvicorn
 from fastapi.responses import RedirectResponse
-from fastapi import HTTPException
 from db import *
 from datetime import datetime
 from hash import *
 from args import *
-import enum
+from response import *
 
 args = get_args()
 
@@ -74,6 +73,11 @@ def delete(alias: str):
     except Exception as e:
         print("alias not deleted")
         return {"message": "alias not found"}
+    
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, code):
+    enum = http_to_enum[code.status_code]
+    return HTMLResponse(content=enum.message, status_code=enum.status_code)
 
 
 if __name__ == "__main__":
@@ -81,24 +85,3 @@ if __name__ == "__main__":
 
 #python -m uvicorn server:app --reload
     
-
-class Response(enum.Enum):
-    OK = (200, "success")
-    NOT_FOUND = (404, "not found")
-    INVALID = (422, "invalid input")
-    BAD_REQUEST = (400, "bad request")
-    CONFLICT = (409, "conflict")
-    INTERNAL_SERVER_ERROR = (500, "internal server error")
-
-    def __init__(self, status_code, message):
-        self.status_code = status_code
-        self.message = message
-
-http_to_enum = {
-    200: Response.OK,
-    404: Response.NOT_FOUND,
-    422: Response.INVALID,
-    400: Response.BAD_REQUEST,
-    409: Response.CONFLICT,
-    500: Response.INTERNAL_SERVER_ERROR
-}
