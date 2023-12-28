@@ -8,8 +8,8 @@ class Response(enum.Enum):
     CONFLICT = (409, "<h1>conflict</h1>")
     INTERNAL_SERVER_ERROR = (500, "<h1>internal server error</h1>")
 
-    def __init__(self, status_code, message):
-        self.status_code = status_code
+    def __init__(self, code, message):
+        self.code = code
         self.message = message
 
 http_to_enum = {

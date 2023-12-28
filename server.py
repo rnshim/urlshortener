@@ -31,9 +31,9 @@ async def create_url(request: Request):
         print("inserted successfully")
         return {"url":urljson['url'], "alias":alias}
     except ValueError as e:
-        raise HTTPException(status_code=Response.INVALID.status_code, detail=str(e))
+        raise HTTPException(status_code=Response.INVALID.code, detail=str(e))
     except KeyError as e:
-        raise HTTPException(status_code=Response.BAD_REQUEST.status_code, detail=str(e))
+        raise HTTPException(status_code=Response.BAD_REQUEST.code, detail=str(e))
     except HTTPException as e:
         print("could not insert")
         return {"message": e.detail}
@@ -58,7 +58,7 @@ def find(alias):
 
     except Exception as e:
         print("url not found")
-        raise HTTPException(status_code=Response.NOT_FOUND.status_code, detail="Item not found")
+        raise HTTPException(status_code=Response.NOT_FOUND.code, detail="Item not found")
     
     except HTTPException as e:
         print("could not find")
@@ -70,14 +70,14 @@ def delete(alias: str):
         delete_url(DATABASE, alias)
         print("alias deleted successfully")
         return {"message": "alias deleted successfully"}
-    except Exception as e:
+    except Exception:
         print("alias not deleted")
         return {"message": "alias not found"}
     
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, code):
-    enum = http_to_enum[code.status_code]
-    return HTMLResponse(content=enum.message, status_code=enum.status_code)
+    enu = http_to_enum[code.status_code]
+    return HTMLResponse(content=enu.message, status_code=enu.code)
 
 
 if __name__ == "__main__":
