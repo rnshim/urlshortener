@@ -1,6 +1,6 @@
-from fastapi import FastAPI, Request, HTTPException, HTMLResponse
+from fastapi import FastAPI, Request, HTTPException
 import uvicorn
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 from db import *
 from datetime import datetime
 from hash import *
@@ -34,12 +34,8 @@ async def create_url(request: Request):
         raise HTTPException(status_code=Response.INVALID.code, detail=str(e))
     except KeyError as e:
         raise HTTPException(status_code=Response.BAD_REQUEST.code, detail=str(e))
-    except HTTPException as e:
-        print("could not insert")
-        return {"message": e.detail}
     except Exception as e:
-        print("could not insert")
-        return {"message": str(e)}
+        raise HTTPException(status_code=Response.INTERNAL_SERVER_ERROR.code, detail=str(e))
 
 @app.get("/list_all")
 def list_all():
@@ -59,24 +55,25 @@ def find(alias):
     except Exception as e:
         print("url not found")
         raise HTTPException(status_code=Response.NOT_FOUND.code, detail="Item not found")
-    
-    except HTTPException as e:
-        print("could not find")
-        return {"message": e.detail}
 
 @app.delete("/delete/{alias}")
 def delete(alias: str):
     try: 
-        delete_url(DATABASE, alias)
-        print("alias deleted successfully")
-        return {"message": "alias deleted successfully"}
+        result = retrieve(DATABASE, alias)
+        if result is not None:
+            delete_url(DATABASE, alias)
+            print("alias deleted successfully")
+            return {"message": "alias deleted successfully"}
+        else:
+            print("alias not found")
+            raise HTTPException(status_code=Response.NOT_FOUND.code, detail="Item not found")
     except Exception:
-        print("alias not deleted")
-        return {"message": "alias not found"}
+        print("error during deletion")
+        raise HTTPException(status_code=Response.NOT_FOUND.code, detail="Item not found")
     
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request, code):
-    enu = http_to_enum[code.status_code]
+async def http_exception_handler(request, ex):
+    enu = http_to_enum.get(ex.status_code, Response.INTERNAL_SERVER_ERROR)
     return HTMLResponse(content=enu.message, status_code=enu.code)
 
 
@@ -84,4 +81,5 @@ if __name__ == "__main__":
     uvicorn.run("server:app", host=args.host, port=args.port, reload=True)
 
 #python -m uvicorn server:app --reload
+#python server.py --db-name my.db
     
