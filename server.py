@@ -1,11 +1,11 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 import uvicorn
-from fastapi.responses import RedirectResponse
-from fastapi import HTTPException
+from fastapi.responses import RedirectResponse, HTMLResponse
 from db import *
 from datetime import datetime
 from hash import *
 from args import *
+from response import *
 
 args = get_args()
 
@@ -31,15 +31,11 @@ async def create_url(request: Request):
         print("inserted successfully")
         return {"url":urljson['url'], "alias":alias}
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+        raise HTTPException(status_code=Response.INVALID.code, detail=str(e))
     except KeyError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except HTTPException as e:
-        print("could not insert")
-        return {"message": e.detail}
+        raise HTTPException(status_code=Response.BAD_REQUEST.code, detail=str(e))
     except Exception as e:
-        print("could not insert")
-        return {"message": str(e)}
+        raise HTTPException(status_code=Response.INTERNAL_SERVER_ERROR.code, detail=str(e))
 
 @app.get("/list_all")
 def list_all():
@@ -58,20 +54,32 @@ def find(alias):
 
     except Exception as e:
         print("url not found")
-        raise HTTPException(status_code=404, detail="Item not found")
+        raise HTTPException(status_code=Response.NOT_FOUND.code, detail="Item not found")
 
 @app.delete("/delete/{alias}")
 def delete(alias: str):
     try: 
-        delete_url(DATABASE, alias)
-        print("alias deleted successfully")
-        return {"message": "alias deleted successfully"}
-    except Exception as e:
-        print("alias not deleted")
-        return {"message": "alias not found"}
+        result = retrieve(DATABASE, alias)
+        if result is not None:
+            delete_url(DATABASE, alias)
+            print("alias deleted successfully")
+            return {"message": "alias deleted successfully"}
+        else:
+            print("alias not found")
+            raise HTTPException(status_code=Response.NOT_FOUND.code, detail="Item not found")
+    except Exception:
+        print("error during deletion")
+        raise HTTPException(status_code=Response.NOT_FOUND.code, detail="Item not found")
+    
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, ex):
+    enu = http_to_enum.get(ex.status_code, Response.INTERNAL_SERVER_ERROR)
+    return HTMLResponse(content=enu.message, status_code=enu.code)
 
 
 if __name__ == "__main__":
     uvicorn.run("server:app", host=args.host, port=args.port, reload=True)
 
 #python -m uvicorn server:app --reload
+#python server.py --db-name my.db
+    
