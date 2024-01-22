@@ -4,4 +4,4 @@ services:
     build: .
     ports:
       - "8000:8000"
-    command: python server.py --db-name my.db --host 0.0.0.0 --port 8000
+    command: python server.py --db-name my.db

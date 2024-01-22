@@ -10,4 +10,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["python", "server.py"]
+ENTRYPOINT ["python", "server.py"]
