@@ -30,6 +30,7 @@ async def create_url(request: Request):
                 raise ValueError("Alias must be alphanumeric")
         if args.disable_random_alias:
             raise KeyError("Alias must be provided")
+        logging.debug(f"create_url requested with {urljson['url']} and generated alias")
         alias = generate_hash(urljson['url'], str(datetime.now()))
         insert(DATABASE, urljson['url'], alias)
         #print("inserted successfully")
