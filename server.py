@@ -20,6 +20,7 @@ async def create_url(request: Request):
     try: 
         urljson = await request.json()
         if 'alias' in urljson:
+            logging.debug(f"create_url requested with {urljson['url']} and {urljson['alias']}")
             if urljson['alias'].isalnum():
                 insert(DATABASE, urljson['url'], urljson['alias'])
                 #print("inserted successfully")
@@ -47,6 +48,7 @@ async def create_url(request: Request):
 @app.get("/list_all")
 def list_all():
     try:
+        logging.debug(f"listing all urls in {DATABASE}")
         logging.info("listing all urls")
         return list_urls(DATABASE)
     except Exception as e:
@@ -55,6 +57,7 @@ def list_all():
 @app.get("/find/{alias}")
 def find(alias):
     try: 
+        logging.debug(f"find requested url with alias: {alias}")
         result = retrieve(DATABASE, alias)
         #print("url found successfully")
         #print(result)
@@ -69,6 +72,7 @@ def find(alias):
 @app.delete("/delete/{alias}")
 def delete(alias: str):
     try: 
+        logging.debug(f"delete requested url with alias: {alias}")
         result = retrieve(DATABASE, alias)
         if result is not None:
             delete_url(DATABASE, alias)
