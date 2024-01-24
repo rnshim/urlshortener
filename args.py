@@ -33,4 +33,11 @@ def get_args():
   help="disable random alias",
   )
 
+  parser.add_argument(
+    "-v",
+    action="count",
+    default=0,
+    help="increase verbosity level",
+  )
+
   return parser.parse_args()

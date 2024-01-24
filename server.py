@@ -19,6 +19,7 @@ app = FastAPI()
 async def create_url(request: Request):
     try: 
         urljson = await request.json()
+        logging.debug(f"create_url requested with {urljson['url']}")
         if 'alias' in urljson:
             logging.debug(f"create_url requested with {urljson['url']} and {urljson['alias']}")
             if urljson['alias'].isalnum():
@@ -30,7 +31,6 @@ async def create_url(request: Request):
                 raise ValueError("Alias must be alphanumeric")
         if args.disable_random_alias:
             raise KeyError("Alias must be provided")
-        logging.debug(f"create_url requested with {urljson['url']} and generated alias")
         alias = generate_hash(urljson['url'], str(datetime.now()))
         insert(DATABASE, urljson['url'], alias)
         #print("inserted successfully")
@@ -50,9 +50,9 @@ async def create_url(request: Request):
 def list_all():
     try:
         logging.debug(f"listing all urls in {DATABASE}")
-        logging.info("listing all urls")
         return list_urls(DATABASE)
     except Exception as e:
+        logging.error("Failed to list urls")
         return {"message": "Failed to list urls"}
 
 @app.get("/find/{alias}")
