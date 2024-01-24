@@ -99,6 +99,7 @@ logging.Formatter.converter = time.gmtime
 logging.basicConfig(
     format="%(asctime)s.%(msecs)03dZ %(levelname)s:%(name)s:%(message)s",
     datefmt="%Y-%m-%dT%H:%M:%S",
+    level=40-args.v*10,
 )
 
 if __name__ == "__main__":
