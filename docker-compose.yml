@@ -8,5 +8,14 @@ services:
       - --db-name=/tmp/my.db
     volumes:
       - shortener_data:/tmp/
+  prometheus:
+    image: prom/prometheus:latest
+    restart: always
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
 volumes:
   shortener_data:
