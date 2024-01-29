@@ -12,7 +12,7 @@ from metrics import *
 import prometheus_client
 
 args = get_args()
-
+metrics_handler=MetricsHandler.instance()
 DATABASE = args.db_name
 create(DATABASE)
 app = FastAPI()
@@ -20,14 +20,14 @@ app = FastAPI()
 @app.post("/create_url")
 async def create_url(request: Request):
     try:
-        with MetricsHandler.query_response_time.labels("create").time():
+        with metrics_handler.query_response_time.labels("create").time():
             urljson = await request.json()
             logging.debug(f"create_url requested with {urljson['url']}")
             if 'alias' in urljson:
                 logging.debug(f"create_url requested with {urljson['url']} and {urljson['alias']}")
                 if urljson['alias'].isalnum():
                     insert(DATABASE, urljson['url'], urljson['alias'])
-                    MetricsHandler.URL_COUNT.inc()
+                    metrics_handler.URL_COUNT.inc()
                     logging.info("inserted successfully")
                     return {"url":urljson['url'], "alias":urljson['alias']}
                 else:
@@ -36,29 +36,29 @@ async def create_url(request: Request):
                 raise KeyError("Alias must be provided")
             alias = generate_hash(urljson['url'], str(datetime.now()))
             insert(DATABASE, urljson['url'], alias)
-            MetricsHandler.url_count.inc()
+            metrics_handler.url_count.inc()
             logging.info("inserted successfully")
             return {"url":urljson['url'], "alias":alias}
     
     except ValueError as e:
         logging.error(str(e))
-        #MetricsHandler.http_error_count.labels("INVALID").inc()
+        metrics_handler.http_error_count.labels("INVALID").inc()
         raise HTTPException(status_code=Response.INVALID.code, detail=str(e))
     
     except KeyError as e:
         logging.error(str(e))
-        #MetricsHandler.http_error_count.labels("BAD REQUEST").inc()
+        metrics_handler.http_error_count.labels("BAD REQUEST").inc()
         raise HTTPException(status_code=Response.BAD_REQUEST.code, detail=str(e))
     
     except Exception as e:
         logging.error(str(e))
-        #MetricsHandler.http_error_count.labels("INTERNAL SERVER ERROR").inc()
+        metrics_handler.http_error_count.labels("INTERNAL SERVER ERROR").inc()
         raise HTTPException(status_code=Response.INTERNAL_SERVER_ERROR.code, detail=str(e))
 
 @app.get("/list_all")
 def list_all():
     try:
-        with MetricsHandler.query_response_time.labels("list").time():
+        with metrics_handler.query_response_time.labels("list").time():
             logging.debug(f"listing all urls in {DATABASE}")
             return list_urls(DATABASE)
     except Exception as e:
@@ -68,33 +68,33 @@ def list_all():
 @app.get("/find/{alias}")
 def find(alias):
     try: 
-        with MetricsHandler.query_response_time.labels("find").time():
+        with metrics_handler.query_response_time.labels("find").time():
             logging.debug(f"find requested url with alias: {alias}")
             result = retrieve(DATABASE, alias)
             logging.info("url found successfully: "+ result)
             return RedirectResponse(url=result, status_code=308)
 
     except Exception as e:
-        MetricsHandler.http_error_count.labels("NOT FOUND").inc()
+        metrics_handler.http_error_count.labels("NOT FOUND").inc()
         logging.error("url not found")
         raise HTTPException(status_code=Response.NOT_FOUND.code, detail="Item not found")
 
 @app.delete("/delete/{alias}")
 def delete(alias: str):
     try: 
-        with MetricsHandler.query_time.labels("delete").time():
+        with metrics_handler.query_response_time.labels("delete").time():
             logging.debug(f"delete requested url with alias: {alias}")
             result = retrieve(DATABASE, alias)
             if result is not None:
                 delete_url(DATABASE, alias)
-                MetricsHandler.url_count.dec()
+                metrics_handler.url_count.dec()
                 logging.info("alias deleted successfully")
                 return {"message": "alias deleted successfully"}
             else:
                 logging.error("alias not found")
                 raise HTTPException(status_code=Response.NOT_FOUND.code, detail="Item not found")
     except Exception:
-        MetricsHandler.http_error_count.labels("NOT FOUND").inc()
+        metrics_handler.http_error_count.labels("NOT FOUND").inc()
         logging.error("error during deletion")
         raise HTTPException(status_code=Response.NOT_FOUND.code, detail="Item not found")
     
@@ -120,6 +120,10 @@ logging.basicConfig(
 
 if __name__ == "__main__":
     uvicorn.run("server:app", host=args.host, port=args.port, reload=True)
+
+if __name__ == "server":
+    initial_url_count = get_number_of_entries(DATABASE)
+    MetricsHandler.url_count.inc(initial_url_count)
 
 #python -m uvicorn server:app --reload
 #python server.py --db-name my.db

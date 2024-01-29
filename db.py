@@ -47,3 +47,11 @@ def retrieve(sqlite_file, alias):
     print("alias " + alias)
     print(row[0])
     return row[0] if row is not None else None
+
+def get_number_of_entries(sqlite_file):
+    conn = sqlite3.connect(sqlite_file)
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM urls")
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row is not None else None
